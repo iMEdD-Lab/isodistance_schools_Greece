@@ -37,15 +37,16 @@
 <script>
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const DATA_URL    = "https://raw.githubusercontent.com/pmethodios/isodistance_evritania/refs/heads/main/hospital_data.json";
+const ISODISTANCES_URL = "https://raw.githubusercontent.com/pmethodios/isodistance_evritania/main/isodistances.json";
+const HOSPITALS_URL    = "https://raw.githubusercontent.com/pmethodios/isodistance_evritania/refs/heads/main/isodistances.json";
 const OSRM_BASE    = "https://router.project-osrm.org";
 const FUEL_PRICE   = 1.92;   // €/litre
 const CONSUMPTION  = 7.5;    // litres/100km
 const BAND_COLORS  = {10:"#2166ac", 25:"#74add1", 50:"#fdae61", 100:"#d73027"};
 const HOSP_COLORS  = ["#c0392b","#8e44ad","#27ae60","#f39c12","#16a085","#2980b9","#d35400","#7f8c8d","#34495e","#1abc9c","#e74c3c"];
 
-let DATA = null;
-const routeCache = {};   // cache OSRM results by rounded coordinate key
+let DATA = { bands: {}, hospitals: [] };
+const routeCache = {};
 
 // ── Map setup ───────────────────────────────────────────────────────────────
 const map = L.map('map').setView([38.0, 23.7], 8);
@@ -57,18 +58,21 @@ let routeLayer = null;
 let userMarker = null;
 
 // ── Load precomputed data ONCE on page load ───────────────────────────────────
-fetch(DATA_URL)
-  .then(r => r.json())
-  .then(data => {
-    DATA = data;
-    renderBands();
-    renderHospitals();
-  })
-  .catch(err => {
-    document.getElementById('instructions').textContent = "Failed to load map data.";
-    console.error(err);
-  });
-
+Promise.all([
+  fetch(ISODISTANCES_URL).then(r => r.json()),
+  fetch(HOSPITALS_URL).then(r => r.json())
+])
+.then(([bands, hospitals]) => {
+  DATA.bands = bands;
+  DATA.hospitals = hospitals;
+  renderBands();
+  renderHospitals();
+})
+.catch(err => {
+  document.getElementById('instructions').textContent = "Failed to load map data.";
+  console.error(err);
+});
+  
 function renderBands() {
   // Draw largest band first so smaller ones render on top
   const bandKeys = Object.keys(DATA.bands).map(Number).sort((a,b) => b - a);
