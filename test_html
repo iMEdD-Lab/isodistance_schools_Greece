@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hospital Accessibility Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  html, body { margin:0; padding:0; height:100%; font-family: -apple-system, sans-serif; }
+  #map { width:100%; height:600px; }
+  #panel {
+    position:absolute; top:10px; right:10px; z-index:1000;
+    background:white; border-radius:8px; padding:14px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15); max-width:260px; font-size:14px;
+    display:none;
+  }
+  #panel h3 { margin:0 0 8px; font-size:15px; }
+  #panel .row { display:flex; justify-content:space-between; margin:4px 0; }
+  #panel .label { color:#666; }
+  #panel .value { font-weight:600; }
+  #loading { color:#888; font-style:italic; }
+  #instructions {
+    position:absolute; top:10px; left:50px; z-index:1000;
+    background:white; padding:8px 14px; border-radius:6px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15); font-size:13px; color:#444;
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="instructions">Click anywhere on the map to find your nearest hospital</div>
+<div id="panel"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+<script>
+
+// ── Config ──────────────────────────────────────────────────────────────────
+const DATA_URL    = "https://raw.githubusercontent.com/YOURUSER/YOURREPO/main/hospital_data.json";
+const OSRM_BASE    = "https://router.project-osrm.org";
+const FUEL_PRICE   = 1.92;   // €/litre
+const CONSUMPTION  = 7.5;    // litres/100km
+const BAND_COLORS  = {10:"#2166ac", 25:"#74add1", 50:"#fdae61", 100:"#d73027"};
+const HOSP_COLORS  = ["#c0392b","#8e44ad","#27ae60","#f39c12","#16a085","#2980b9","#d35400","#7f8c8d","#34495e","#1abc9c","#e74c3c"];
+
+let DATA = null;
+const routeCache = {};   // cache OSRM results by rounded coordinate key
+
+// ── Map setup ───────────────────────────────────────────────────────────────
+const map = L.map('map').setView([38.0, 23.7], 8);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO'
+}).addTo(map);
+
+let routeLayer = null;
+let userMarker = null;
+
+// ── Load precomputed data ONCE on page load ───────────────────────────────────
+fetch(DATA_URL)
+  .then(r => r.json())
+  .then(data => {
+    DATA = data;
+    renderBands();
+    renderHospitals();
+  })
+  .catch(err => {
+    document.getElementById('instructions').textContent = "Failed to load map data.";
+    console.error(err);
+  });
+
+function renderBands() {
+  // Draw largest band first so smaller ones render on top
+  const bandKeys = Object.keys(DATA.bands).map(Number).sort((a,b) => b - a);
+  bandKeys.forEach(km => {
+    const geojson = DATA.bands[km];
+    L.geoJSON(geojson, {
+      style: { color: BAND_COLORS[km] || "#999", weight: 1.5, fillOpacity: 0.25 }
+    }).bindTooltip(`${km} km by road`).addTo(map);
+  });
+}
+
+function renderHospitals() {
+  DATA.hospitals.forEach((h, i) => {
+    L.circleMarker([h.lat, h.lon], {
+      radius: 7, color: "white", weight: 2,
+      fillColor: HOSP_COLORS[i % HOSP_COLORS.length], fillOpacity: 1
+    }).bindTooltip(h.name).addTo(map);
+  });
+}
+
+// ── Point-in-polygon band lookup — runs LOCALLY, no network call ──────────────
+function getBandForPoint(lat, lon) {
+  const pt = turf.point([lon, lat]);
+  const bandKeys = Object.keys(DATA.bands).map(Number).sort((a,b) => a - b);
+  for (const km of bandKeys) {
+    if (turf.booleanPointInPolygon(pt, DATA.bands[km])) return km;
+  }
+  return null;
+}
+
+// ── Fuel cost ───────────────────────────────────────────────────────────────
+function fuelCost(km) {
+  return ((km / 100) * CONSUMPTION * FUEL_PRICE).toFixed(2);
+}
+
+// ── OSRM route fetch — cached so repeated clicks near the same spot reuse it ──
+async function getRoute(lat1, lon1, lat2, lon2) {
+  const key = `${lat1.toFixed(3)},${lon1.toFixed(3)}-${lat2.toFixed(3)},${lon2.toFixed(3)}`;
+  if (routeCache[key]) return routeCache[key];
+
+  const url = `${OSRM_BASE}/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+  const res = await fetch(url);
+  const json = await res.json();
+  const route = json.routes[0];
+
+  const result = {
+    distKm: route.distance / 1000,
+    durMin: route.duration / 60,
+    geojson: route.geometry
+  };
+  routeCache[key] = result;
+  return result;
+}
+
+// ── Main click handler ─────────────────────────────────────────────────────
+map.on('click', async (e) => {
+  const { lat, lng } = e.latlng;
+
+  const panel = document.getElementById('panel');
+  panel.style.display = 'block';
+  panel.innerHTML = '<div id="loading">Calculating…</div>';
+
+  if (userMarker) map.removeLayer(userMarker);
+  userMarker = L.marker([lat, lng]).addTo(map);
+
+  // Find nearest hospital using OSRM for EACH hospital
+  // (only fires on click, not continuously — and results are cached)
+  const results = await Promise.all(
+    DATA.hospitals.map(async (h) => {
+      const r = await getRoute(lat, lng, h.lat, h.lon);
+      return { ...h, ...r };
+    })
+  );
+
+  results.sort((a, b) => a.distKm - b.distKm);
+  const nearest = results[0];
+  const band = getBandForPoint(lat, lng);
+  const cost = fuelCost(nearest.distKm);
+
+  // Draw route
+  if (routeLayer) map.removeLayer(routeLayer);
+  routeLayer = L.geoJSON(nearest.geojson, {
+    style: { color: "#27ae60", weight: 4, opacity: 0.85 }
+  }).addTo(map);
+
+  // Update panel
+  panel.innerHTML = `
+    <h3>${nearest.name}</h3>
+    <div class="row"><span class="label">Distance</span><span class="value">${nearest.distKm.toFixed(1)} km</span></div>
+    <div class="row"><span class="label">Drive time</span><span class="value">${nearest.durMin.toFixed(0)} min</span></div>
+    <div class="row"><span class="label">Fuel cost</span><span class="value">€${cost}</span></div>
+    <div class="row"><span class="label">Distance band</span><span class="value">${band ? band + ' km' : 'outside'}</span></div>
+  `;
+});
+
+</script>
+</body>
+</html>
