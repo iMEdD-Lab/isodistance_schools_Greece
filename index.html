@@ -76,18 +76,29 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+
 <script>
 
 // ── Data files ───────────────────────────────────────────────────────────────
-const ISODISTANCES_URL =
-  "./reproject_50m.geojson";
+const ISODISTANCES_URL = "./reproject_50m.geojson";
+const LYKEIA_URL = "./lykeia_points.geojson";
 
-const LYKEIA_URL =
-  "./lykeia_points.geojson";
-
-// The property name in reproject_50m.geojson is expected to be "category".
-// Change it here if the GeoJSON uses another name, e.g. "final_category".
+// Change this only if the polygon field is named differently in the GeoJSON.
 const CATEGORY_FIELD = "category";
+
+// Change these only if your Lykeia GeoJSON uses a known different name field.
+const SCHOOL_NAME_FIELDS = [
+  "name",
+  "NAME",
+  "school_name",
+  "SCHOOL_NAME",
+  "onoma",
+  "ΟΝΟΜΑ"
+];
+
+const OSRM_BASE = "https://router.project-osrm.org";
+const FUEL_PRICE = 1.92;  // €/litre
+const CONSUMPTION = 7.5;  // litres/100 km
 
 const BAND_INFO = {
   1: { label: "0–5 km", color: "#2166ac" },
@@ -97,6 +108,7 @@ const BAND_INFO = {
 };
 
 const SCHOOL_COLOR = "#5b2c6f";
+const routeCache = {};
 
 let DATA = {
   isodistances: null,
@@ -111,43 +123,59 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 }).addTo(map);
 
 let userMarker = null;
+let routeLayer = null;
 
 // ── Data loading ────────────────────────────────────────────────────────────
 Promise.all([
   fetch(ISODISTANCES_URL).then(response => {
     if (!response.ok) {
-      throw new Error(`Could not load isodistance GeoJSON (HTTP ${response.status}).`);
+      throw new Error(
+        `Could not load reproject_50m.geojson (HTTP ${response.status}).`
+      );
     }
     return response.json();
   }),
+
   fetch(LYKEIA_URL).then(response => {
     if (!response.ok) {
-      throw new Error(`Could not load Lykeia GeoJSON (HTTP ${response.status}).`);
+      throw new Error(
+        `Could not load lykeia_points.geojson (HTTP ${response.status}).`
+      );
     }
     return response.json();
   })
 ])
 .then(([isodistances, lykeia]) => {
+  if (isodistances.type !== "FeatureCollection") {
+    throw new Error("reproject_50m.geojson is not a GeoJSON FeatureCollection.");
+  }
+
+  if (lykeia.type !== "FeatureCollection") {
+    throw new Error("lykeia_points.geojson is not a GeoJSON FeatureCollection.");
+  }
+
   DATA.isodistances = isodistances;
   DATA.lykeia = lykeia;
 
   renderBands();
   renderLykeia();
+
+  document.getElementById("instructions").textContent =
+    "Click anywhere on the map to find the nearest Lykeio by road";
 })
 .catch(error => {
-  document.getElementById("instructions").textContent =
-    "Failed to load map data. Open the browser console for details.";
+  document.getElementById("instructions").textContent = error.message;
   console.error(error);
 });
 
-// ── Isodistance polygons ────────────────────────────────────────────────────
+// ── Accessibility polygons ──────────────────────────────────────────────────
 function renderBands() {
   L.geoJSON(DATA.isodistances, {
     style: feature => {
       const category = Number(feature.properties?.[CATEGORY_FIELD]);
       const info = BAND_INFO[category] || {
-        color: "#999",
-        label: "Unknown category"
+        label: "Unknown category",
+        color: "#999"
       };
 
       return {
@@ -169,7 +197,29 @@ function renderBands() {
   }).addTo(map);
 }
 
-// ── Lykeia point layer ──────────────────────────────────────────────────────
+// ── School helpers ──────────────────────────────────────────────────────────
+function getSchoolName(feature) {
+  const properties = feature.properties || {};
+
+  for (const field of SCHOOL_NAME_FIELDS) {
+    if (properties[field]) {
+      return String(properties[field]);
+    }
+  }
+
+  return "Lykeio";
+}
+
+function getSchoolPointFeatures() {
+  return DATA.lykeia.features.filter(feature =>
+    feature.geometry &&
+    feature.geometry.type === "Point" &&
+    Array.isArray(feature.geometry.coordinates) &&
+    feature.geometry.coordinates.length >= 2
+  );
+}
+
+// ── Render Lykeia points ────────────────────────────────────────────────────
 function renderLykeia() {
   L.geoJSON(DATA.lykeia, {
     pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
@@ -181,25 +231,12 @@ function renderLykeia() {
     }),
 
     onEachFeature: (feature, layer) => {
-      const properties = feature.properties || {};
-
-      // This tries several common field names. If your GeoJSON has a known
-      // school-name column, replace this whole block with that exact field.
-      const schoolName =
-        properties.name ||
-        properties.NAME ||
-        properties.school_name ||
-        properties.SCHOOL_NAME ||
-        properties.onoma ||
-        properties.ΟΝΟΜΑ ||
-        "Lykeio";
-
-      layer.bindTooltip(schoolName, { sticky: true });
+      layer.bindTooltip(getSchoolName(feature), { sticky: true });
     }
   }).addTo(map);
 }
 
-// ── Local point-in-polygon category lookup ──────────────────────────────────
+// ── Accessibility lookup ────────────────────────────────────────────────────
 function getCategoryForPoint(lat, lon) {
   const point = turf.point([lon, lat]);
 
@@ -212,14 +249,100 @@ function getCategoryForPoint(lat, lon) {
   return null;
 }
 
-// ── Map click handler ───────────────────────────────────────────────────────
-map.on("click", event => {
-  if (!DATA.isodistances) return;
+// ── Fuel cost ───────────────────────────────────────────────────────────────
+function fuelCost(km) {
+  return ((km / 100) * CONSUMPTION * FUEL_PRICE).toFixed(2);
+}
+
+// ── OSRM route request ──────────────────────────────────────────────────────
+async function getRoute(startLat, startLon, endLat, endLon) {
+  const key =
+    `${startLat.toFixed(4)},${startLon.toFixed(4)}` +
+    `-${endLat.toFixed(4)},${endLon.toFixed(4)}`;
+
+  if (routeCache[key]) {
+    return routeCache[key];
+  }
+
+  const url =
+    `${OSRM_BASE}/route/v1/driving/` +
+    `${startLon},${startLat};${endLon},${endLat}` +
+    `?overview=full&geometries=geojson`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Routing service unavailable (HTTP ${response.status}).`);
+  }
+
+  const json = await response.json();
+
+  if (!json.routes || json.routes.length === 0) {
+    throw new Error("No driving route was found to this school.");
+  }
+
+  const route = json.routes[0];
+
+  const result = {
+    distKm: route.distance / 1000,
+    durMin: route.duration / 60,
+    geojson: route.geometry
+  };
+
+  routeCache[key] = result;
+  return result;
+}
+
+// ── Find nearest school by road ─────────────────────────────────────────────
+// First find the 5 geographically closest schools with Turf.
+// Then ask OSRM for a driving route to each and choose the shortest road route.
+// This is much faster than routing to every Lykeio in Greece on every click.
+async function findNearestSchoolByRoad(lat, lon) {
+  const schoolFeatures = getSchoolPointFeatures();
+
+  if (schoolFeatures.length === 0) {
+    throw new Error("No valid Point features were found in lykeia_points.geojson.");
+  }
+
+  const clickedPoint = turf.point([lon, lat]);
+
+  const rankedByStraightLineDistance = schoolFeatures
+    .map(feature => ({
+      feature,
+      straightLineKm: turf.distance(clickedPoint, feature, {
+        units: "kilometers"
+      })
+    }))
+    .sort((a, b) => a.straightLineKm - b.straightLineKm);
+
+  const candidates = rankedByStraightLineDistance.slice(0, 5);
+
+  const routeResults = await Promise.all(
+    candidates.map(async candidate => {
+      const [schoolLon, schoolLat] = candidate.feature.geometry.coordinates;
+      const route = await getRoute(lat, lon, schoolLat, schoolLon);
+
+      return {
+        feature: candidate.feature,
+        name: getSchoolName(candidate.feature),
+        ...route
+      };
+    })
+  );
+
+  routeResults.sort((a, b) => a.distKm - b.distKm);
+
+  return routeResults[0];
+}
+
+// ── Main click handler ──────────────────────────────────────────────────────
+map.on("click", async event => {
+  if (!DATA.isodistances || !DATA.lykeia) {
+    return;
+  }
 
   const { lat, lng } = event.latlng;
   const panel = document.getElementById("panel");
-  const category = getCategoryForPoint(lat, lng);
-  const info = BAND_INFO[category];
 
   if (userMarker) {
     map.removeLayer(userMarker);
@@ -228,19 +351,73 @@ map.on("click", event => {
   userMarker = L.marker([lat, lng]).addTo(map);
 
   panel.style.display = "block";
-  panel.innerHTML = `
-    <h3>Accessibility classification</h3>
-    <div class="row">
-      <span class="label">Zone</span>
-      <span class="value">${info ? info.label : "Outside mapped area"}</span>
-    </div>
-    <div class="row">
-      <span class="label">Coordinates</span>
-      <span class="value">${lat.toFixed(4)}, ${lng.toFixed(4)}</span>
-    </div>
-  `;
+  panel.innerHTML = `<div id="loading">Finding nearest Lykeio by road…</div>`;
+
+  const category = getCategoryForPoint(lat, lng);
+  const categoryInfo = BAND_INFO[category];
+  const categoryLabel = categoryInfo
+    ? categoryInfo.label
+    : "Outside mapped area";
+
+  try {
+    const nearest = await findNearestSchoolByRoad(lat, lng);
+    const cost = fuelCost(nearest.distKm);
+
+    if (routeLayer) {
+      map.removeLayer(routeLayer);
+    }
+
+    routeLayer = L.geoJSON(nearest.geojson, {
+      style: {
+        color: "#27ae60",
+        weight: 4,
+        opacity: 0.85
+      }
+    }).addTo(map);
+
+    panel.innerHTML = `
+      <h3>${nearest.name}</h3>
+
+      <div class="row">
+        <span class="label">Driving distance</span>
+        <span class="value">${nearest.distKm.toFixed(1)} km</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Drive time</span>
+        <span class="value">${nearest.durMin.toFixed(0)} min</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Estimated fuel cost</span>
+        <span class="value">€${cost}</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Accessibility class</span>
+        <span class="value">${categoryLabel}</span>
+      </div>
+    `;
+  } catch (error) {
+    console.error(error);
+
+    panel.innerHTML = `
+      <h3>Accessibility classification</h3>
+
+      <div class="row">
+        <span class="label">Zone</span>
+        <span class="value">${categoryLabel}</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Routing</span>
+        <span class="value">No route found</span>
+      </div>
+    `;
+  }
 });
 
 </script>
+
 </body>
 </html>
