@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,6 +53,11 @@
     text-align: right;
   }
 
+  #loading {
+    color: #888;
+    font-style: italic;
+  }
+
   #instructions {
     position: absolute;
     top: 10px;
@@ -66,13 +70,40 @@
     font-size: 13px;
     color: #444;
   }
+
+  /* Add your logo file to the same GitHub repository folder as index.html. */
+  #logo {
+    position: absolute;
+    bottom: 24px;
+    left: 12px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  #logo img {
+    display: block;
+    max-width: 150px;
+    max-height: 70px;
+    width: auto;
+    height: auto;
+  }
 </style>
 </head>
 <body>
 
 <div id="map"></div>
-<div id="instructions">Click anywhere in Greece to view its accessibility class</div>
+<div id="instructions">Click anywhere in Greece to find the nearest Lykeio by road</div>
 <div id="panel"></div>
+
+<!-- Upload logo.png to the repository root, or change logo.png to your logo filename. -->
+<div id="logo">
+  <img src="./imedd-logo.svg" alt="Project logo">
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
@@ -161,7 +192,7 @@ Promise.all([
   renderLykeia();
 
   document.getElementById("instructions").textContent =
-    "Click anywhere on the map to find the nearest Lykeio by road";
+    "Click anywhere in Greece to find the nearest Lykeio by road";
 })
 .catch(error => {
   document.getElementById("instructions").textContent = error.message;
@@ -296,7 +327,6 @@ async function getRoute(startLat, startLon, endLat, endLon) {
 // ── Find nearest school by road ─────────────────────────────────────────────
 // First find the 5 geographically closest schools with Turf.
 // Then ask OSRM for a driving route to each and choose the shortest road route.
-// This is much faster than routing to every Lykeio in Greece on every click.
 async function findNearestSchoolByRoad(lat, lon) {
   const schoolFeatures = getSchoolPointFeatures();
 
@@ -343,29 +373,39 @@ map.on("click", async event => {
 
   const { lat, lng } = event.latlng;
   const panel = document.getElementById("panel");
+  const category = getCategoryForPoint(lat, lng);
+
+  // Clear a route left from a previous click, regardless of where the user clicked.
+  if (routeLayer) {
+    map.removeLayer(routeLayer);
+    routeLayer = null;
+  }
 
   if (userMarker) {
     map.removeLayer(userMarker);
   }
 
   userMarker = L.marker([lat, lng]).addTo(map);
-
   panel.style.display = "block";
-  panel.innerHTML = `<div id="loading">Finding nearest Lykeio by road…</div>`;
 
-  const category = getCategoryForPoint(lat, lng);
-  const categoryInfo = BAND_INFO[category];
-  const categoryLabel = categoryInfo
-    ? categoryInfo.label
-    : "Outside mapped area";
+  // Outside every isodistance polygon: do not call OSRM and do not identify a school.
+  if (category === null || !BAND_INFO[category]) {
+    panel.innerHTML = `
+      <h3>Area outside road network</h3>
+      <div class="row">
+        <span class="label">Accessibility</span>
+        <span class="value">No road-network classification</span>
+      </div>
+    `;
+    return;
+  }
+
+  const categoryLabel = BAND_INFO[category].label;
+  panel.innerHTML = `<div id="loading">Finding nearest Lykeio by road…</div>`;
 
   try {
     const nearest = await findNearestSchoolByRoad(lat, lng);
     const cost = fuelCost(nearest.distKm);
-
-    if (routeLayer) {
-      map.removeLayer(routeLayer);
-    }
 
     routeLayer = L.geoJSON(nearest.geojson, {
       style: {
@@ -418,6 +458,5 @@ map.on("click", async event => {
 });
 
 </script>
-
 </body>
 </html>
