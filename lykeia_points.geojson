@@ -1000,7 +1000,7 @@
 { "type": "Feature", "properties": { "fid": 995, "mm_id": 1014030, "name": "ΗΜΕΡΗΣΙΟ ΓΕΝΙΚΟ ΛΥΚΕΙΟ ΚΑΛΛΙΜΑΣΙΑΣ ΧΙΟΥ" }, "geometry": { "type": "Point", "coordinates": [ 26.104641, 38.292167 ] } },
 { "type": "Feature", "properties": { "fid": 996, "mm_id": 1001284, "name": "ΗΜΕΡΗΣΙΟ ΓΕΝΙΚΟ ΛΥΚΕΙΟ ΚΑΡΔΑΜΥΛΩΝ - ΛΙΒΑΝΕΙΟ" }, "geometry": { "type": "Point", "coordinates": [ 26.111596, 38.540129 ] } },
 { "type": "Feature", "properties": { "fid": 997, "mm_id": 1001272, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΛΤ ΟΙΝΟΥΣΣΩΝ" }, "geometry": { "type": "Point", "coordinates": [ 26.215221, 38.515461 ] } },
-{ "type": "Feature", "properties": { "fid": 998, "mm_id": 1014026, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΧΙΟΥ - ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΙΩΑΝΝΗΣ ΒΑΡΒΑΚΗΣ" }, "geometry": { "type": "Point", "coordinates": [ 25.583204, 38.498977 ] } },
+{ "type": "Feature", "properties": { "fid": 998, "mm_id": 1014026, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΧΙΟΥ - ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΙΩΑΝΝΗΣ ΒΑΡΒΑΚΗΣ" }, "geometry": { "type": "Point", "coordinates": [ 25.56239755532642, 38.54059534361487  ] } },
 { "type": "Feature", "properties": { "fid": 999, "mm_id": 1027153, "name": "Ιδιωτικό Πρότυπο ΕΠΑ.Λ. ΤΣΑΚΟΣ ΕΛΛΗΝΙΚΑ ΕΚΠΑΙΔΕΥΤΗΡΙΑ ΝΑΥΤΙΚΩΝ ΣΠΟΥΔΩΝ" }, "geometry": { "type": "Point", "coordinates": [ 26.141122, 38.354283 ] } },
 { "type": "Feature", "properties": { "fid": 1000, "mm_id": 1001269, "name": "ΜΟΥΣΙΚΟ ΣΧΟΛΕΙΟ ΧΙΟΥ" }, "geometry": { "type": "Point", "coordinates": [ 26.137517, 38.310331 ] } },
 { "type": "Feature", "properties": { "fid": 1001, "mm_id": 1015041, "name": "ΕΣΠΕΡΙΝΟ ΓΥΜΝΑΣΙΟ & Λ.Τ. ΑΜΑΛΙΑΔΑΣ ΗΛΕΙΑΣ" }, "geometry": { "type": "Point", "coordinates": [ 21.354382, 37.795955 ] } },
