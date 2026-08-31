@@ -106,8 +106,17 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link
+  href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+  rel="stylesheet"
+/>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
 
+  
 <script>
 
 // ── Data files ───────────────────────────────────────────────────────────────
@@ -149,10 +158,10 @@ let DATA = {
 // ── Map setup ───────────────────────────────────────────────────────────────
 const map = L.map("map").setView([38.0, 23.7], 8);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap &copy; CARTO"
+L.maplibreGL({
+  style: "https://tiles.openfreemap.org/styles/positron"
 }).addTo(map);
-  
+
 let userMarker = null;
 let routeLayer = null;
 
