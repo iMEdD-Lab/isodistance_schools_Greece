@@ -1175,7 +1175,7 @@
 { "type": "Feature", "properties": { "fid": 1170, "mm_id": 1016308, "name": "ΕΠΑΛ ΣΙΔΗΡΟΚΑΣΤΡΟΥ ΣΕΡΡΩΝ" }, "geometry": { "type": "Point", "coordinates": [ 23.390891, 41.215702 ] } },
 { "type": "Feature", "properties": { "fid": 1171, "mm_id": 1017854, "name": "ΕΣΠΕΡΙΝΟ ΓΥΜΝΑΣΙΟ ΣΕΡΡΩΝ ΜΕ ΛΥΚΕΙΑΚΕΣ ΤΑΞΕΙΣ" }, "geometry": { "type": "Point", "coordinates": [ 23.543578, 41.081257 ] } },
 { "type": "Feature", "properties": { "fid": 1172, "mm_id": 1016322, "name": "ΗΜΕΡΗΣΙΟ ΓΕΝΙΚΟ ΛΥΚΕΙΟ ΚΑΤΩ ΠΟΡΟΪΩΝ ΣΕΡΡΩΝ" }, "geometry": { "type": "Point", "coordinates": [ 23.008243, 41.281555 ] } },
-{ "type": "Feature", "properties": { "fid": 1173, "mm_id": 1001255, "name": "ΙΔΙΩΤΙΚΟ ΗΜΕΡΗΣΙΟ ΛΥΚΕΙΟ ΣΕΡΡΕΣ - ΑΡΙΣΤΟΤΕΛΕΙΟ ΕΚΠΑΙΔΕΥΤΗΡΙΟ" }, "geometry": { "type": "Point", "coordinates": [ 24.003939, 38.151059 ] } },
+{ "type": "Feature", "properties": { "fid": 1173, "mm_id": 1001255, "name": "ΙΔΙΩΤΙΚΟ ΗΜΕΡΗΣΙΟ ΛΥΚΕΙΟ ΣΕΡΡΕΣ - ΑΡΙΣΤΟΤΕΛΕΙΟ ΕΚΠΑΙΔΕΥΤΗΡΙΟ" }, "geometry": { "type": "Point", "coordinates": [ 23.610970960794567, 41.07796698024709 ] } },
 { "type": "Feature", "properties": { "fid": 1174, "mm_id": 1016265, "name": "ΜΟΥΣΙΚΟ ΓΥΜΝΑΣΙΟ ΣΕΡΡΩΝ-ΛΥΚΕΙΑΚΕΣ ΤΑΞΕΙΣ" }, "geometry": { "type": "Point", "coordinates": [ 23.556251, 41.073276 ] } },
 { "type": "Feature", "properties": { "fid": 1175, "mm_id": 1016556, "name": "1ο ΗΜΕΡΗΣΙΟ ΓΕΝΙΚΟ ΛΥΚΕΙΟ ΙΕΡΙΣΣΟΣ ΧΑΛΚΙΔΙΚΗΣ - ΑΡΙΣΤΟΤΕΛΕΙΟ" }, "geometry": { "type": "Point", "coordinates": [ 23.874538, 40.39483 ] } },
 { "type": "Feature", "properties": { "fid": 1176, "mm_id": 1016545, "name": "1ο ΗΜΕΡΗΣΙΟ ΕΠΑΛ ΑΡΝΑΙΑΣ ΧΑΛΚΙΔΙΚΗΣ" }, "geometry": { "type": "Point", "coordinates": [ 23.598485, 40.48695 ] } },
