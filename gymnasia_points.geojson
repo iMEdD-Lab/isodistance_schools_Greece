@@ -1015,7 +1015,7 @@
 { "type": "Feature", "properties": { "fid": 1010, "mm_id": 1001273, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΚΑΜΠΟΥ ΧΙΟΥ" }, "geometry": { "type": "Point", "coordinates": [ 26.133395, 38.336194 ] } },
 { "type": "Feature", "properties": { "fid": 1011, "mm_id": 1001270, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΚΑΡΔΑΜΥΛΩΝ - ΛΙΒΑΝΕΙΟ" }, "geometry": { "type": "Point", "coordinates": [ 26.112159, 38.540075 ] } },
 { "type": "Feature", "properties": { "fid": 1012, "mm_id": 1001272, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΛΤ ΟΙΝΟΥΣΣΩΝ" }, "geometry": { "type": "Point", "coordinates": [ 26.215221, 38.515461 ] } },
-{ "type": "Feature", "properties": { "fid": 1013, "mm_id": 1014026, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΧΙΟΥ - ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΙΩΑΝΝΗΣ ΒΑΡΒΑΚΗΣ" }, "geometry": { "type": "Point", "coordinates": [ 25.583204, 38.498977 ] } },
+{ "type": "Feature", "properties": { "fid": 1013, "mm_id": 1014026, "name": "ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΧΙΟΥ - ΓΥΜΝΑΣΙΟ ΨΑΡΩΝ ΙΩΑΝΝΗΣ ΒΑΡΒΑΚΗΣ" }, "geometry": { "type": "Point", "coordinates": [ 25.56239755532642, 38.54059534361487 ] } },
 { "type": "Feature", "properties": { "fid": 1014, "mm_id": 1001269, "name": "ΜΟΥΣΙΚΟ ΣΧΟΛΕΙΟ ΧΙΟΥ" }, "geometry": { "type": "Point", "coordinates": [ 26.137517, 38.310331 ] } },
 { "type": "Feature", "properties": { "fid": 1015, "mm_id": 1015034, "name": "1ο ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΑΜΑΛΙΑΔΑΣ ΗΛΕΙΑΣ" }, "geometry": { "type": "Point", "coordinates": [ 21.35437, 37.795887 ] } },
 { "type": "Feature", "properties": { "fid": 1016, "mm_id": 1015024, "name": "1ο ΗΜΕΡΗΣΙΟ ΓΥΜΝΑΣΙΟ ΠΥΡΓΟΥ ΗΛΕΙΑΣ" }, "geometry": { "type": "Point", "coordinates": [ 21.438361, 37.67561 ] } },
