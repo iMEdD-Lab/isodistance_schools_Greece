@@ -90,6 +90,41 @@
   background: #f3f3f3;
   }
 
+  #legend {
+  position: absolute;
+  right: 10px;
+  bottom: 24px;
+  z-index: 1000;
+  min-width: 190px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #444;
+  font-size: 13px;
+  line-height: 1.35;
+  }
+
+  #legend h3 {
+    margin: 0 0 7px;
+    font-size: 14px;
+  }
+
+  #legend .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+
+  #legend .swatch {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
+
   /* Add your logo file to the same GitHub repository folder as index.html. */
   #logo {
     position: absolute;
@@ -120,6 +155,30 @@
 <button id="map-switch">Show Gymnasia map</button>
 
 <div id="panel"></div>
+
+<div id="legend" aria-label="Accessibility zone legend">
+  <h3>School accessibility</h3>
+
+  <div class="legend-row">
+    <span class="swatch" style="background: #2166ac;"></span>
+    <span>0–5 km</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="swatch" style="background: #74add1;"></span>
+    <span>5–10 km</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="swatch" style="background: #fdae61;"></span>
+    <span>10–25 km</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="swatch" style="background: #d73027;"></span>
+    <span>25–50+ km or unreachable</span>
+  </div>
+</div>
 
 <!-- Upload logo.png to the repository root, or change logo.png to your logo filename. -->
 <div id="logo">
@@ -266,8 +325,13 @@ async function loadMapData(mapKey) {
 loadMapData(activeMapKey);
 
 // ── Accessibility polygons ──────────────────────────────────────────────────
+// ── Accessibility polygons ──────────────────────────────────────────────────
 function renderBands() {
   bandsLayer = L.geoJSON(DATA.isodistances, {
+    // Let clicks pass through polygons to the map click handler.
+    // This also prevents polygon hover/click interaction.
+    interactive: false,
+
     style: feature => {
       const category = Number(feature.properties?.[CATEGORY_FIELD]);
       const info = BAND_INFO[category] || {
@@ -281,19 +345,10 @@ function renderBands() {
         fillColor: info.color,
         fillOpacity: 0.35
       };
-    },
-
-    onEachFeature: (feature, layer) => {
-      const category = Number(feature.properties?.[CATEGORY_FIELD]);
-      const info = BAND_INFO[category];
-
-      if (info) {
-        layer.bindTooltip(info.label, { sticky: true });
-      }
     }
   }).addTo(map);
 }
-
+  
 // ── School helpers ──────────────────────────────────────────────────────────
 function getSchoolName(feature) {
   const properties = feature.properties || {};
@@ -364,7 +419,7 @@ async function getRoute(startLat, startLon, endLat, endLon) {
   const url =
     `${OSRM_BASE}/route/v1/driving/` +
     `${startLon},${startLat};${endLon},${endLat}` +
-    `?overview=full&geometries=geojson`;
+    `?overview=full&geometries=geojson&exclude=ferry`;
 
   const response = await fetch(url);
 
