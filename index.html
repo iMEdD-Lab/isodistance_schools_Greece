@@ -409,7 +409,7 @@ function fuelCost(km) {
 // ── OSRM route request ──────────────────────────────────────────────────────
 async function getRoute(startLat, startLon, endLat, endLon) {
   const key =
-    `${activeMapKey}:no-ferry:` +
+    `${activeMapKey}:` +
     `${startLat.toFixed(4)},${startLon.toFixed(4)}` +
     `-${endLat.toFixed(4)},${endLon.toFixed(4)}`;
 
@@ -420,7 +420,7 @@ async function getRoute(startLat, startLon, endLat, endLon) {
   const url =
     `${OSRM_BASE}/route/v1/driving/` +
     `${startLon},${startLat};${endLon},${endLat}` +
-    `?overview=full&geometries=geojson&exclude=ferry`;
+    `?overview=full&geometries=geojson`;
 
   const response = await fetch(url);
 
@@ -430,8 +430,8 @@ async function getRoute(startLat, startLon, endLat, endLon) {
 
   const json = await response.json();
 
-  if (!json.routes || json.routes.length === 0) {
-    throw new Error("No driving route was found to this school.");
+  if (json.code !== "Ok" || !json.routes || json.routes.length === 0) {
+    throw new Error(json.message || "No driving route was found to this school.");
   }
 
   const route = json.routes[0];
@@ -445,7 +445,7 @@ async function getRoute(startLat, startLon, endLat, endLon) {
   routeCache[key] = result;
   return result;
 }
-
+  
 // ── Find nearest school by road ─────────────────────────────────────────────
 // First find the 5 geographically closest schools with Turf.
 // Then ask OSRM for a driving route to each and choose the shortest road route.
@@ -469,24 +469,30 @@ async function findNearestSchoolByRoad(lat, lon) {
 
   const candidates = rankedByStraightLineDistance.slice(0, 5);
 
-  const routeResults = await Promise.all(
-    candidates.map(async candidate => {
-      const [schoolLon, schoolLat] = candidate.feature.geometry.coordinates;
-      const route = await getRoute(lat, lon, schoolLat, schoolLon);
+const attempts = await Promise.allSettled(
+  candidates.map(async candidate => {
+    const [schoolLon, schoolLat] = candidate.feature.geometry.coordinates;
+    const route = await getRoute(lat, lon, schoolLat, schoolLon);
 
-      return {
-        feature: candidate.feature,
-        name: getSchoolName(candidate.feature),
-        ...route
-      };
-    })
-  );
+    return {
+      feature: candidate.feature,
+      name: getSchoolName(candidate.feature),
+      ...route
+    };
+  })
+);
 
-  routeResults.sort((a, b) => a.distKm - b.distKm);
+const routeResults = attempts
+  .filter(attempt => attempt.status === "fulfilled")
+  .map(attempt => attempt.value)
+  .sort((a, b) => a.distKm - b.distKm);
 
-  return routeResults[0];
+if (routeResults.length === 0) {
+  throw new Error("No driving route was found to any nearby school.");
 }
 
+return routeResults[0];
+}
 // ── Main click handler ──────────────────────────────────────────────────────
 map.on("click", async event => {
   if (!DATA.isodistances || !DATA.lykeia) {
