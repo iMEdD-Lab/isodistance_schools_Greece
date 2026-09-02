@@ -588,10 +588,10 @@ map.on("click", async event => {
   // Outside every isodistance polygon: do not call OSRM and do not identify a school.
   if (category === null || !BAND_INFO[category]) {
     panel.innerHTML = `
-      <h3>Area outside road network</h3>
+      <h3>Εκτός περιοχής ανάλυσης</h3>
       <div class="row">
         <span class="label">Accessibility</span>
-        <span class="value">No road-network classification</span>
+        <span class="value">Χωρίς κατηγορία απόστασης</span>
       </div>
     `;
     return;
