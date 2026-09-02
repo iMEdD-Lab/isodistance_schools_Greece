@@ -70,6 +70,25 @@
     font-size: 13px;
     color: #444;
   }
+  
+  #map-switch {
+  position: absolute;
+  top: 48px;
+  left: 50px;
+  z-index: 1000;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  }
+
+  #map-switch:hover {
+  background: #f3f3f3;
+  }
 
   /* Add your logo file to the same GitHub repository folder as index.html. */
   #logo {
@@ -97,7 +116,9 @@
 <body>
 
 <div id="map"></div>
-<div id="instructions">Click anywhere in Greece to find the nearest Lykeio by road</div>
+<div id="instructions">Click anywhere in Greece to find the nearest school by road</div>
+<button id="map-switch">Show Gymnasia map</button>
+
 <div id="panel"></div>
 
 <!-- Upload logo.png to the repository root, or change logo.png to your logo filename. -->
@@ -120,9 +141,21 @@
 <script>
 
 // ── Data files ───────────────────────────────────────────────────────────────
-const ISODISTANCES_URL = "./correct_sxinousa_2.geojson";
-const LYKEIA_URL = "./lykeia_points.geojson";
+const MAPS = {
+  lykeia: {
+    isodistancesUrl: "./correct_sxinousa_2.geojson",
+    pointsUrl: "./lykeia_points.geojson",
+    label: "Lykeia accessibility"
+  },
+  gymnasia: {
+    isodistancesUrl: "./final-gymnasia-simplify-50m.geojson",
+    pointsUrl: "./gymnasia_points.geojson",
+    label: "Gymnasia accessibility"
+  }
+};
 
+let activeMapKey = "lykeia";
+  
 // Change this only if the polygon field is named differently in the GeoJSON.
 const CATEGORY_FIELD = "category";
 
@@ -155,6 +188,8 @@ let DATA = {
   lykeia: null
 };
 
+let bandsLayer = null;
+let schoolsLayer = null;
 // ── Map setup ───────────────────────────────────────────────────────────────
 const map = L.map("map").setView([38.0, 23.7], 8);
 
@@ -166,51 +201,73 @@ let userMarker = null;
 let routeLayer = null;
 
 // ── Data loading ────────────────────────────────────────────────────────────
-Promise.all([
-  fetch(ISODISTANCES_URL).then(response => {
-    if (!response.ok) {
-      throw new Error(
-        `Could not load reproject_50m.geojson (HTTP ${response.status}).`
-      );
-    }
-    return response.json();
-  }),
+async function loadMapData(mapKey) {
+  const config = MAPS[mapKey];
 
-  fetch(LYKEIA_URL).then(response => {
-    if (!response.ok) {
-      throw new Error(
-        `Could not load lykeia_points.geojson (HTTP ${response.status}).`
-      );
-    }
-    return response.json();
-  })
-])
-.then(([isodistances, lykeia]) => {
-  if (isodistances.type !== "FeatureCollection") {
-    throw new Error("reproject_50m.geojson is not a GeoJSON FeatureCollection.");
+  document.getElementById("instructions").textContent = "Loading map data…";
+
+  if (bandsLayer) {
+    map.removeLayer(bandsLayer);
+    bandsLayer = null;
   }
 
-  if (lykeia.type !== "FeatureCollection") {
-    throw new Error("lykeia_points.geojson is not a GeoJSON FeatureCollection.");
+  if (schoolsLayer) {
+    map.removeLayer(schoolsLayer);
+    schoolsLayer = null;
   }
 
-  DATA.isodistances = isodistances;
-  DATA.lykeia = lykeia;
+  if (routeLayer) {
+    map.removeLayer(routeLayer);
+    routeLayer = null;
+  }
 
-  renderBands();
-  renderLykeia();
+  if (userMarker) {
+    map.removeLayer(userMarker);
+    userMarker = null;
+  }
 
-  document.getElementById("instructions").textContent =
-    "Click anywhere in Greece to find the nearest Lykeio by road";
-})
-.catch(error => {
-  document.getElementById("instructions").textContent = error.message;
-  console.error(error);
-});
+  document.getElementById("panel").style.display = "none";
+
+  try {
+    const [isodistances, lykeia] = await Promise.all([
+      fetch(config.isodistancesUrl).then(response => {
+        if (!response.ok) {
+          throw new Error(
+            `Could not load ${config.isodistancesUrl} (HTTP ${response.status}).`
+          );
+        }
+        return response.json();
+      }),
+
+      fetch(config.pointsUrl).then(response => {
+        if (!response.ok) {
+          throw new Error(
+            `Could not load ${config.pointsUrl} (HTTP ${response.status}).`
+          );
+        }
+        return response.json();
+      })
+    ]);
+
+    DATA.isodistances = isodistances;
+    DATA.lykeia = lykeia;
+
+    renderBands();
+    renderLykeia();
+
+    document.getElementById("instructions").textContent =
+      `Click anywhere in Greece to find the nearest school by road — ${config.label}`;
+  } catch (error) {
+    document.getElementById("instructions").textContent = error.message;
+    console.error(error);
+  }
+}
+
+loadMapData(activeMapKey);
 
 // ── Accessibility polygons ──────────────────────────────────────────────────
 function renderBands() {
-  L.geoJSON(DATA.isodistances, {
+  bandsLayer = L.geoJSON(DATA.isodistances, {
     style: feature => {
       const category = Number(feature.properties?.[CATEGORY_FIELD]);
       const info = BAND_INFO[category] || {
@@ -261,7 +318,7 @@ function getSchoolPointFeatures() {
 
 // ── Render Lykeia points ────────────────────────────────────────────────────
 function renderLykeia() {
-  L.geoJSON(DATA.lykeia, {
+  schoolsLayer = L.geoJSON(DATA.lykeia, {
     pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
       radius: 5,
       color: "white",
@@ -275,7 +332,7 @@ function renderLykeia() {
     }
   }).addTo(map);
 }
-
+  
 // ── Accessibility lookup ────────────────────────────────────────────────────
 function getCategoryForPoint(lat, lon) {
   const point = turf.point([lon, lat]);
@@ -410,7 +467,7 @@ map.on("click", async event => {
   }
 
   const categoryLabel = BAND_INFO[category].label;
-  panel.innerHTML = `<div id="loading">Finding nearest Lykeio by road…</div>`;
+  panel.innerHTML = `<div id="loading">Finding nearest school by road…</div>`;
 
   try {
     const nearest = await findNearestSchoolByRoad(lat, lng);
@@ -464,6 +521,17 @@ map.on("click", async event => {
       </div>
     `;
   }
+});
+
+  document.getElementById("map-switch").addEventListener("click", () => {
+  activeMapKey = activeMapKey === "lykeia" ? "gymnasia" : "lykeia";
+
+  document.getElementById("map-switch").textContent =
+    activeMapKey === "lykeia"
+      ? "Show Gymnasia map"
+      : "Show Lykeia map";
+
+  loadMapData(activeMapKey);
 });
 
 </script>
