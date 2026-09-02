@@ -409,6 +409,7 @@ function fuelCost(km) {
 // ── OSRM route request ──────────────────────────────────────────────────────
 async function getRoute(startLat, startLon, endLat, endLon) {
   const key =
+    `${activeMapKey}:no-ferry:` +
     `${startLat.toFixed(4)},${startLon.toFixed(4)}` +
     `-${endLat.toFixed(4)},${endLon.toFixed(4)}`;
 
