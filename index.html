@@ -303,7 +303,7 @@ let routeLayer = null;
 async function loadMapData(mapKey) {
   const config = MAPS[mapKey];
 
-  document.getElementById("instructions").textContent = "Loading map data…";
+  document.getElementById("instructions").textContent = "Φόρτωση δεδομένων…";
 
   if (bandsLayer) {
     map.removeLayer(bandsLayer);
