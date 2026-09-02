@@ -424,6 +424,35 @@ function renderLykeia() {
     }
   }).addTo(map);
 }
+
+// ── School-point size by zoom level ─────────────────────────────────────────
+function getSchoolPointRadius(zoom) {
+  if (zoom <= 7) return 1.5;
+  if (zoom <= 8) return 2;
+  if (zoom <= 9) return 3;
+  if (zoom <= 10) return 4;
+  return 5;
+}
+
+function updateSchoolPointSizes() {
+  if (!schoolsLayer) {
+    return;
+  }
+
+  const radius = getSchoolPointRadius(map.getZoom());
+
+  schoolsLayer.eachLayer(layer => {
+    if (layer instanceof L.CircleMarker) {
+      layer.setRadius(radius);
+
+      layer.setStyle({
+        weight: radius <= 2 ? 0.75 : 1.5
+      });
+    }
+  });
+}
+
+map.on("zoomend", updateSchoolPointSizes);
   
 // ── Accessibility lookup ────────────────────────────────────────────────────
 function getCategoryForPoint(lat, lon) {
