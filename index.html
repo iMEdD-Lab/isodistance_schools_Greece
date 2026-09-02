@@ -244,12 +244,12 @@ const MAPS = {
   lykeia: {
     isodistancesUrl: "./correct_sxinousa_2.geojson",
     pointsUrl: "./lykeia_points.geojson",
-    label: "Lykeia accessibility"
+    label: "Λύκεια"
   },
   gymnasia: {
     isodistancesUrl: "./gymnasia-isodistances_2.geojson",
     pointsUrl: "./gymnasia_points.geojson",
-    label: "Gymnasia accessibility"
+    label: "Γυμνάσια"
   }
 };
 
@@ -355,7 +355,7 @@ async function loadMapData(mapKey) {
     renderLykeia();
 
     document.getElementById("instructions").textContent =
-      `Click anywhere in Greece to find the nearest school by road — ${config.label}`;
+      `Κάντε κλικ για να εντοπίσετε το κοντινότερο σχολείο — ${config.label}`;
   } catch (error) {
     document.getElementById("instructions").textContent = error.message;
     console.error(error);
