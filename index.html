@@ -251,12 +251,12 @@
 // ── Data files (add new gymnasia isodistanes) ─────────────────────────────────────────────
 const MAPS = {
   lykeia: {
-    isodistancesUrl: "./lykeia-corrections.geojson",
+    isodistancesUrl: "./lykeia-isodistances.geojson",
     pointsUrl: "./lykeia_points.geojson",
     label: "Λύκεια"
   },
   gymnasia: {
-    isodistancesUrl: "./gymnasia-corrections.geojson",
+    isodistancesUrl: "./gymnasia-isodistances.geojson",
     pointsUrl: "./gymnasia_points.geojson",
     label: "Γυμνάσια"
   }
@@ -298,6 +298,7 @@ let DATA = {
 
 let bandsLayer = null;
 let schoolsLayer = null;
+let islandsNoSchoolLayer = null;
 // ── Map setup ───────────────────────────────────────────────────────────────
 const map = L.map("map").setView([38.0, 23.7], 8);
 
@@ -373,6 +374,25 @@ async function loadMapData(mapKey) {
 
 loadMapData(activeMapKey);
 
+// ── Load islands without schools once ───────────────────────────────────────
+fetch("./islands-without-schools.geojson")
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(
+        `Could not load ./islands-without-schools.geojson ` +
+        `(HTTP ${response.status}).`
+      );
+    }
+
+    return response.json();
+  })
+  .then(geojson => {
+    renderIslandsNoSchoolLayer(geojson);
+  })
+  .catch(error => {
+    console.error("Could not load the islands-without-schools layer:", error);
+  });
+
 // ── Accessibility polygons ──────────────────────────────────────────────────
 function renderBands() {
   bandsLayer = L.geoJSON(DATA.isodistances, {
@@ -396,7 +416,25 @@ function renderBands() {
     }
   }).addTo(map);
 }
-  
+
+// ── Islands without schools: display-only polygon overlay ───────────────────
+function renderIslandsNoSchoolLayer(geojson) {
+  if (islandsNoSchoolLayer) {
+    map.removeLayer(islandsNoSchoolLayer);
+  }
+
+  islandsNoSchoolLayer = L.geoJSON(geojson, {
+    interactive: false,
+
+    style: {
+      color: "#2c3e50",
+      weight: 1.5,
+      opacity: 0.9,
+      fillColor: "#8e44ad",
+      fillOpacity: 0.25
+    }
+  }).addTo(map);
+}
 // ── School helpers ──────────────────────────────────────────────────────────
 function getSchoolName(feature) {
   const properties = feature.properties || {};
