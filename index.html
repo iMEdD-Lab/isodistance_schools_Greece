@@ -415,7 +415,7 @@ function getSchoolPointFeatures() {
 function renderLykeia() {
   schoolsLayer = L.geoJSON(DATA.lykeia, {
     pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
-      radius: 5,
+      radius: getSchoolPointRadius(map.getZoom()),
       color: "white",
       weight: 1.5,
       fillColor: SCHOOL_COLOR,
@@ -426,6 +426,22 @@ function renderLykeia() {
       layer.bindTooltip(getSchoolName(feature), { sticky: true });
     }
   }).addTo(map);
+
+  // Apply the correct marker size immediately on first render,
+  // rather than waiting for the first zoom event.
+  updateSchoolPointSizes();
+
+  // On the first load only, fit the map to all available school points.
+  if (activeMapKey === "lykeia") {
+    const bounds = schoolsLayer.getBounds();
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, {
+        padding: [20, 20],
+        maxZoom: 8
+      });
+    }
+  }
 }
 
 // ── School-point size by zoom level ─────────────────────────────────────────
