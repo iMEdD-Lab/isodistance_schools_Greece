@@ -278,8 +278,6 @@ const SCHOOL_NAME_FIELDS = [
 ];
 
 const OSRM_BASE = "https://router.project-osrm.org";
-const FUEL_PRICE = 1.92;  // €/litre
-const CONSUMPTION = 7.5;  // litres/100 km
 
 const BAND_INFO = {
   1: { label: "0–5 χλμ", color: "#2166ac" },
@@ -532,10 +530,6 @@ function getCategoryForPoint(lat, lon) {
   return null;
 }
 
-// ── Fuel cost ───────────────────────────────────────────────────────────────
-function fuelCost(km) {
-  return ((km / 100) * CONSUMPTION * FUEL_PRICE).toFixed(2);
-}
 
 // ── OSRM route request ──────────────────────────────────────────────────────
 async function getRoute(startLat, startLon, endLat, endLon) {
@@ -664,7 +658,6 @@ map.on("click", async event => {
 
   try {
     const nearest = await findNearestSchoolByRoad(lat, lng);
-    const cost = fuelCost(nearest.distKm);
 
     routeLayer = L.geoJSON(nearest.geojson, {
       style: {
