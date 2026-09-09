@@ -783,10 +783,6 @@ map.on("click", async event => {
             <span class="value">${nearest.distKm.toFixed(1)} ${activeLang === "el" ? "χλμ" : "km"}</span>
           </div>
 
-          <div class="row">
-            <span class="label">${strings.zoneLabel}</span>
-            <span class="value">${categoryLabel}</span>
-          </div>
         </div>
       `);
     };
@@ -801,11 +797,6 @@ map.on("click", async event => {
       userMarker.setPopupContent(`
         <div class="info-popup">
           <h3>${strings.errorTitle}</h3>
-
-          <div class="row">
-            <span class="label">${strings.zoneLabel}</span>
-            <span class="value">${categoryLabel}</span>
-          </div>
 
           <div class="row">
             <span class="label">${strings.routingLabel}</span>
