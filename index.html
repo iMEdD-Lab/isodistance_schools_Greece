@@ -97,7 +97,7 @@
 #legend {
   position: absolute;
   right: 10px;
-  bottom: 43px;
+  bottom: 58px;
   z-index: 1000;
   width: clamp(140px, 45vw, 190px);
   padding: clamp(8px, 2vw, 10px) clamp(9px, 2.5vw, 12px);
@@ -194,24 +194,59 @@
   width: auto;
   height: auto;
 }
+  .leaflet-bottom.leaflet-left {
+  bottom: 88px;
+  left: 10px;
+  }
+
+  .leaflet-control-zoom a {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 20px;
+  }
+
 
 @media (max-width: 480px) {
+  #map {
+    height: 100dvh;
+    min-height: 420px;
+  }
+
+  #top-left-controls {
+    top: max(8px, env(safe-area-inset-top, 0px));
+    left: max(8px, env(safe-area-inset-left, 0px));
+  }
+  
+  #lang-switch {
+    top: max(8px, env(safe-area-inset-top, 0px));
+    right: max(8px, env(safe-area-inset-right, 0px));
+  }
+
   #legend {
-    bottom: 8px;
-    right: 8px;
+    right: max(8px, env(safe-area-inset-right, 0px));
+    bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+    width: clamp(140px, 48vw, 180px);
   }
 
   #attribution {
-    display: none; /* saves space on very small screens; still visible on desktop/tablet */
+    right: max(8px, env(safe-area-inset-right, 0px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    max-width: calc(100vw - 16px);
+    text-align: right;
   }
 
   #logo {
-    bottom: 8px;
-    left: 4px;
+    left: max(4px, env(safe-area-inset-left, 0px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .leaflet-bottom.leaflet-left {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: max(8px, env(safe-area-inset-left, 0px));
   }
 }
-
-
+  
 </style>
 </head>
 <body>
@@ -394,7 +429,17 @@ let schoolsLayer = null;
 let islandsNoSchoolLayer = null;
 
 // ── Map setup ───────────────────────────────────────────────────────────────
-const map = L.map("map").setView([38.0, 23.7], 8);
+const map = L.map("map", {
+  zoomControl: false
+}).setView([38.0, 23.7], 8);
+
+L.control.zoom({
+  position: "bottomleft"
+}).addTo(map);
+
+window.addEventListener("resize", () => {
+  map.invalidateSize({ pan: false });
+});
 
 L.maplibreGL({
   style: "https://tiles.openfreemap.org/styles/positron"
