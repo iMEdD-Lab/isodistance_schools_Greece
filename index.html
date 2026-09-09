@@ -464,7 +464,7 @@ function updateStaticUI() {
     activeLang === "el" ? "EN" : "ΕΛ";
 
   if (DATA.isodistances) {
-    document.getElementById("instructions").textContent =
+    document.getElementById("instructions").innerHTML =
       strings.instructionsWithMap(strings.mapLabel[activeMapKey]);
   }
 }
