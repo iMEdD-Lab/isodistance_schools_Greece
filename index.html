@@ -132,13 +132,30 @@
   }
   
   #legend .legend-ticks {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
+    height: 16px;
     margin-top: 4px;
     font-size: 11px;
     color: #666;
   }
 
+  #legend .legend-ticks .tick {
+    position: absolute;
+    transform: translateX(-50%);
+  }
+  
+  #legend .legend-ticks .tick-5 {
+    left: 25%;
+  }
+  
+  #legend .legend-ticks .tick-10 {
+    left: 50%;
+  }
+  
+  #legend .legend-ticks .tick-25 {
+    left: 75%;
+  }
+  
   #attribution {
     position: absolute;
     right: 10px;
@@ -203,10 +220,9 @@
   </div>
 
   <div class="legend-ticks">
-    <span>0</span>
-    <span>5</span>
-    <span>10</span>
-    <span>25+</span>
+    <span class="tick tick-5">5</span>
+    <span class="tick tick-10">10</span>
+    <span class="tick tick-25">25+</span>
   </div>
 </div>
   
