@@ -21,41 +21,27 @@
     height: 600px;
   }
 
-  #panel {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    display: none;
-    max-width: 280px;
-    padding: 14px 16px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    font-size: 14px;
-  }
-
-  #panel h3 {
+  .info-popup h3 {
     margin: 0 0 8px;
     font-size: 15px;
   }
-
-  #panel .row {
+  
+  .info-popup .row {
     display: flex;
     justify-content: space-between;
     gap: 14px;
     margin: 4px 0;
+    font-size: 14px;
   }
-
-  #panel .label {
+  
+  .info-popup .label {
     color: #666;
   }
-
-  #panel .value {
+  
+  .info-popup .value {
     font-weight: 600;
     text-align: right;
   }
-
   #loading {
     color: #888;
     font-style: italic;
@@ -92,6 +78,25 @@
   #map-switch:hover {
   background: #f3f3f3;
   }
+  
+  #lang-switch {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  }
+
+  #lang-switch:hover {
+    background: #f3f3f3;
+  }
 
   #legend {
   position: absolute;
@@ -113,19 +118,24 @@
     font-size: 14px;
   }
 
-  #legend .legend-row {
+  #legend .legend-bar {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 4px 0;
-  }
-
-  #legend .swatch {
-    width: 15px;
-    height: 15px;
-    flex: 0 0 15px;
+    height: 14px;
+    border-radius: 3px;
+    overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
+  }
+  
+  #legend .legend-bar span {
+    flex: 1 1 0;
+  }
+  
+  #legend .legend-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #666;
   }
 
   #attribution {
@@ -178,33 +188,27 @@
 <div id="map"></div>
 <div id="instructions">Κάντε κλικ για να εντοπίσετε το κοντινότερο σχολείο</div>
 <button id="map-switch">Χάρτης Γυμνασίων</button>
+<button id="lang-switch">EN</button>
 
-<div id="panel"></div>
 
 <div id="legend" aria-label="Accessibility zone legend">
-  <h3>Ζώνη απόστασης</h3>
+  <h3>Ζώνη απόστασης (χλμ)</h3>
 
-  <div class="legend-row">
-    <span class="swatch" style="background: #2166ac;"></span>
-    <span>0–5 χλμ</span>
+  <div class="legend-bar">
+    <span style="background: #2166ac;"></span>
+    <span style="background: #74add1;"></span>
+    <span style="background: #fdae61;"></span>
+    <span style="background: #d73027;"></span>
   </div>
 
-  <div class="legend-row">
-    <span class="swatch" style="background: #74add1;"></span>
-    <span>5–10 χλμ</span>
-  </div>
-
-  <div class="legend-row">
-    <span class="swatch" style="background: #fdae61;"></span>
-    <span>10–25 χλμ</span>
-  </div>
-
-  <div class="legend-row">
-    <span class="swatch" style="background: #d73027;"></span>
-    <span>25–50+ χλμ ή δυσπρόσιτο σημείο</span>
+  <div class="legend-ticks">
+    <span>0</span>
+    <span>5</span>
+    <span>10</span>
+    <span>25+</span>
   </div>
 </div>
-
+  
 <div id="attribution">
   © <a
     href="https://www.openstreetmap.org/copyright"
@@ -306,6 +310,17 @@ L.maplibreGL({
 
 let userMarker = null;
 let routeLayer = null;
+
+// Language change setup
+
+let activeLang = "el";
+
+document.getElementById("lang-switch").addEventListener("click", () => {
+  activeLang = activeLang === "el" ? "en" : "el";
+  document.getElementById("lang-switch").textContent =
+    activeLang === "el" ? "EN" : "ΕΛ";
+  // TODO: swap all Greek UI strings for English equivalents once copy is ready
+});
 
 // ── Data loading ────────────────────────────────────────────────────────────
 async function loadMapData(mapKey) {
@@ -625,7 +640,6 @@ map.on("click", async event => {
   }
 
   const { lat, lng } = event.latlng;
-  const panel = document.getElementById("panel");
   const category = getCategoryForPoint(lat, lng);
 
   // Clear a route left from a previous click, regardless of where the user clicked.
@@ -639,22 +653,27 @@ map.on("click", async event => {
   }
 
   userMarker = L.marker([lat, lng]).addTo(map);
-  panel.style.display = "block";
 
   // Outside every isodistance polygon: do not call OSRM and do not identify a school.
   if (category === null || !BAND_INFO[category]) {
-    panel.innerHTML = `
-      <h3>Εκτός περιοχής ανάλυσης</h3>
-      <div class="row">
-        <span class="label">Accessibility</span>
-        <span class="value">Χωρίς κατηγορία απόστασης</span>
+    userMarker.bindPopup(`
+      <div class="info-popup">
+        <h3>Εκτός περιοχής ανάλυσης</h3>
+        <div class="row">
+          <span class="label">Accessibility</span>
+          <span class="value">Χωρίς κατηγορία απόστασης</span>
+        </div>
       </div>
-    `;
+    `, { className: "info-popup" }).openPopup();
     return;
   }
 
   const categoryLabel = BAND_INFO[category].label;
-  panel.innerHTML = `<div id="loading">Υπολογισμός απόστασης…</div>`;
+
+  userMarker.bindPopup(
+    `<div class="info-popup"><div id="loading">Υπολογισμός απόστασης…</div></div>`,
+    { className: "info-popup" }
+  ).openPopup();
 
   try {
     const nearest = await findNearestSchoolByRoad(lat, lng);
@@ -667,35 +686,39 @@ map.on("click", async event => {
       }
     }).addTo(map);
 
-    panel.innerHTML = `
-      <h3>${nearest.name}</h3>
+    userMarker.setPopupContent(`
+      <div class="info-popup">
+        <h3>${nearest.name}</h3>
 
-      <div class="row">
-        <span class="label">Απόσταση</span>
-        <span class="value">${nearest.distKm.toFixed(1)} χλμ</span>
-      </div>
+        <div class="row">
+          <span class="label">Απόσταση</span>
+          <span class="value">${nearest.distKm.toFixed(1)} χλμ</span>
+        </div>
 
-      <div class="row">
-        <span class="label">Ζώνη απόστασης</span>
-        <span class="value">${categoryLabel}</span>
+        <div class="row">
+          <span class="label">Ζώνη απόστασης</span>
+          <span class="value">${categoryLabel}</span>
+        </div>
       </div>
-    `;
+    `);
   } catch (error) {
     console.error(error);
 
-    panel.innerHTML = `
-      <h3>Accessibility classification</h3>
+    userMarker.setPopupContent(`
+      <div class="info-popup">
+        <h3>Accessibility classification</h3>
 
-      <div class="row">
-        <span class="label">Zone</span>
-        <span class="value">${categoryLabel}</span>
-      </div>
+        <div class="row">
+          <span class="label">Zone</span>
+          <span class="value">${categoryLabel}</span>
+        </div>
 
-      <div class="row">
-        <span class="label">Routing</span>
-        <span class="value">No route found</span>
+        <div class="row">
+          <span class="label">Routing</span>
+          <span class="value">No route found</span>
+        </div>
       </div>
-    `;
+    `);
   }
 });
 
