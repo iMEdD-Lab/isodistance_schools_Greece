@@ -80,18 +80,18 @@
   }
   
   #lang-switch {
-    position: absolute;
-    top: 96px;
-    right: 10px;
-    z-index: 1000;
-    padding: 8px 14px;
-    border: 0;
-    border-radius: 6px;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    font-size: 13px;
-    color: #444;
-    cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
   }
   
   #lang-switch:hover {
@@ -100,9 +100,8 @@
 
   #legend {
     position: absolute;
-    top: 10px;
     right: 10px;
-    bottom: auto;
+    bottom: 43px;
     z-index: 1000;
     min-width: 190px;
     padding: 10px 12px;
@@ -732,23 +731,18 @@ map.on("click", async event => {
 
   // Outside every isodistance polygon: do not call OSRM and do not identify a school.
   if (category === null || !BAND_COLORS[category]) {
-    lastPopupRender = () => {
-      const strings = t();
-      userMarker.setPopupContent(`
-        <div class="info-popup">
-          <h3>${strings.outsideTitle}</h3>
-          <div class="row">
-            <span class="label">${strings.accessibilityLabel}</span>
-            <span class="value">${strings.noCategoryValue}</span>
-          </div>
-        </div>
-      `);
-    };
+  lastPopupRender = () => {
+    userMarker.setPopupContent(`
+      <div class="info-popup">
+        <h3>${t().outsideTitle}</h3>
+      </div>
+    `);
+  };
 
-    userMarker.bindPopup("", { className: "info-popup" }).openPopup();
-    lastPopupRender();
-    return;
-  }
+  userMarker.bindPopup("", { className: "info-popup" }).openPopup();
+  lastPopupRender();
+  return;
+}
 
   lastPopupRender = () => {
     userMarker.setPopupContent(
