@@ -572,15 +572,14 @@ function renderBands() {
       const color = BAND_COLORS[category] || "#999";
 
       return {
-        color: color,
-        weight: 1,
+        stroke: false,
         fillColor: color,
         fillOpacity: 0.35
       };
     }
   }).addTo(map);
 }
-
+  
 // ── Islands without schools: display-only polygon overlay ───────────────────
 function renderIslandsNoSchoolLayer(geojson) {
   if (islandsNoSchoolLayer) {
