@@ -480,6 +480,7 @@ function updateStaticUI() {
 document.getElementById("lang-switch").addEventListener("click", () => {
   activeLang = activeLang === "el" ? "en" : "el";
   updateStaticUI();
+  updateSchoolTooltips();
 
   if (lastPopupRender) {
     lastPopupRender();
@@ -604,14 +605,26 @@ function renderIslandsNoSchoolLayer(geojson) {
 function getSchoolName(feature) {
   const properties = feature.properties || {};
 
+  // When the site is in English, use the transliterated field if available.
+  if (activeLang === "en" && properties.name_en) {
+    return String(properties.name_en);
+  }
+
+  // Otherwise use the original Greek school-name fields.
   for (const field of SCHOOL_NAME_FIELDS) {
     if (properties[field]) {
       return String(properties[field]);
     }
   }
 
-  return "Lykeio";
+  // Fallback if name_en is absent in a feature or older GeoJSON file.
+  if (properties.name_en) {
+    return String(properties.name_en);
+  }
+
+  return activeLang === "en" ? "School" : "Σχολείο";
 }
+  
 
 function getSchoolPointFeatures() {
   return DATA.lykeia.features.filter(feature =>
@@ -652,6 +665,18 @@ function renderLykeia() {
   }
 }
 
+function updateSchoolTooltips() {
+  if (!schoolsLayer) {
+    return;
+  }
+
+  schoolsLayer.eachLayer(layer => {
+    if (layer.feature) {
+      layer.setTooltipContent(getSchoolName(layer.feature));
+    }
+  });
+}
+  
 // ── School-point size by zoom level ─────────────────────────────────────────
 function getSchoolPointRadius(zoom) {
   if (zoom <= 7) return 1.5;
