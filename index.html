@@ -16,11 +16,17 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
-#map {
+#map-container {
+  position: relative;
   width: 100%;
   height: min(600px, 80vh);
 }
 
+#map {
+  width: 100%;
+  height: 100%;
+}
+  
 .info-popup h3 {
   margin: 0 0 8px;
   font-size: clamp(13px, 3.5vw, 15px);
@@ -208,7 +214,7 @@
 
 
 @media (max-width: 480px) {
-  #map {
+  #map-container {
     height: 100dvh;
     min-height: 420px;
   }
@@ -251,60 +257,62 @@
 </head>
 <body>
 
-<div id="map"></div>
-<div id="top-left-controls">
-  <div id="instructions">Κάντε κλικ για να εντοπίσετε το κοντινότερο σχολείο</div>
-  <button id="map-switch">Χάρτης Γυμνασίων</button>
-</div>
-<button id="lang-switch">EN</button>
+<div id="map-container">
+  <div id="map"></div>
 
+  <div id="top-left-controls">
+    <div id="instructions">Κάντε κλικ για να εντοπίσετε το κοντινότερο σχολείο</div>
+    <button id="map-switch">Χάρτης Γυμνασίων</button>
+  </div>
+  <button id="lang-switch">EN</button>
 
-<div id="legend" aria-label="Accessibility zone legend">
-  <h3 id="legend-title">Ζώνη απόστασης (χλμ)</h3>
-  
-  <div class="legend-bar">
-    <span style="background: #2166ac;"></span>
-    <span style="background: #74add1;"></span>
-    <span style="background: #fdae61;"></span>
-    <span style="background: #d73027;"></span>
+  <div id="legend" aria-label="Accessibility zone legend">
+    <h3 id="legend-title">Ζώνη απόστασης (χλμ)</h3>
+
+    <div class="legend-bar">
+      <span style="background: #2166ac;"></span>
+      <span style="background: #74add1;"></span>
+      <span style="background: #fdae61;"></span>
+      <span style="background: #d73027;"></span>
+    </div>
+
+    <div class="legend-ticks">
+      <span class="tick tick-5">5</span>
+      <span class="tick tick-10">10</span>
+      <span class="tick tick-25">25+</span>
+    </div>
   </div>
 
-  <div class="legend-ticks">
-    <span class="tick tick-5">5</span>
-    <span class="tick tick-10">10</span>
-    <span class="tick tick-25">25+</span>
+  <div id="attribution">
+    ©
+    
+      href="https://www.openstreetmap.org/copyright"
+      target="_blank"
+      rel="noopener noreferrer"
+    >OpenStreetMap contributors</a>
+    · <span id="attribution-routing-label">Routing</span>:
+    
+      href="https://project-osrm.org/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >OSRM</a>
   </div>
-</div>
-  
-<div id="attribution">
-  ©
-  <a
-    href="https://www.openstreetmap.org/copyright"
-    target="_blank"
-    rel="noopener noreferrer"
-  >OpenStreetMap contributors</a>
-  · <span id="attribution-routing-label">Routing</span>:
-  <a
-    href="https://project-osrm.org/"
-    target="_blank"
-    rel="noopener noreferrer"
-  >OSRM</a>
-</div>  
 
-<div id="logo">
-  <a
-    href="https://lab.imedd.org/"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Visit the iMEdD website"
-  >
-    <img
-      src="./imedd-logo.svg"
-      alt="Project logo"
+  <div id="logo">
+    
+      href="https://lab.imedd.org/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Visit the iMEdD website"
     >
-  </a>
+      <img
+        src="./imedd-logo.svg"
+        alt="Project logo"
+      >
+    </a>
+  </div>
 </div>
-
+  
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
