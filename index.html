@@ -548,10 +548,10 @@ updateStaticUI();
 loadMapData(activeMapKey);
 
 // ── Load islands without schools once ───────────────────────────────────────
-fetch("./islands-without-schools.geojson")
+fetch("./geojson_files/islands-without-schools.geojson")
   .then(response => {
     if (!response.ok) {
-      throw new Error(t().loadError("./islands-without-schools.geojson", response.status));
+      throw new Error(t().loadError("./geojson_files/islands-without-schools.geojson", response.status));
     }
     return response.json();
   })
@@ -559,7 +559,7 @@ fetch("./islands-without-schools.geojson")
     renderIslandsNoSchoolLayer(geojson);
   })
   .catch(error => {
-    console.error("Could not load the islands-without-schools layer:", error);
+    console.error("Could not load the islands_without_schools layer:", error);
   });
 
 // ── Accessibility polygons ──────────────────────────────────────────────────
