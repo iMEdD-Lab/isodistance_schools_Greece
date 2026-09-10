@@ -572,7 +572,9 @@ function renderBands() {
       const color = BAND_COLORS[category] || "#999";
 
       return {
-        stroke: false,
+        stroke: category !== 4,
+        color: color,
+        weight: 1,
         fillColor: color,
         fillOpacity: 0.35
       };
