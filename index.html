@@ -381,8 +381,13 @@ const STRINGS = {
   }
 };
 
-let activeLang = "el";
+// ── Embedding language default view 
+const urlParams = new URLSearchParams(window.location.search);
+const requestedLang = urlParams.get("lang");
 
+let activeLang = requestedLang === "en" ? "en" : "el";
+
+  
 function t() {
   return STRINGS[activeLang];
 }
